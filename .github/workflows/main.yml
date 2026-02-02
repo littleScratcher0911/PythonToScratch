@@ -9,16 +9,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: SB3 erzeugen
-        run: python make_gamecube_intro.py
+      - name: Show repo files (debug)
+        run: |
+          echo "PWD: $(pwd)"
+          ls -la
+          ls -la .github || true
 
-      - uses: actions/upload-artifact@v4
+      # optional: install dependencies if needed
+      - name: Install dependencies
+        if: fileExists('requirements.txt')
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: SB3 erzeugen
+        # Passe hier den Dateinamen / Pfad an den tatsächlichen Dateinamen in deinem Repo an:
+        run: python Script.py
+
+      - name: Check artifact exists (debug)
+        run: |
+          ls -la GameCube_Intro.sb3 || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: GameCube_Intro
           path: GameCube_Intro.sb3
