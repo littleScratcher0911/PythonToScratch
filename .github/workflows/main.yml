@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -23,19 +25,44 @@ jobs:
       - name: Show workspace before build (debug)
         run: |
           echo "PWD: $(pwd)"
+          echo "Listing top-level files:"
           ls -la
 
       - name: SB3 erzeugen
         run: |
+          # Passe hier den Dateinamen an, falls dein Script anders heißt
           python Script.py
 
       - name: Show files after build (debug)
         run: |
           echo "Files in workspace after build:"
           ls -la
+          echo "Find any .sb3 files:"
           find . -maxdepth 3 -type f -name "*.sb3" -print || true
 
-      - uses: actions/upload-artifact@v4
+      - name: Extract project.json (debug)
+        run: |
+          if [ -f GameCube_Intro.sb3 ]; then
+            echo "Inhalt des .sb3-Archivs:"
+            unzip -l GameCube_Intro.sb3
+            echo "Extrahiere project.json..."
+            # -p schreibt project.json auf stdout; wir leiten es in eine Datei
+            unzip -p GameCube_Intro.sb3 project.json > project.json || true
+            echo "---- project.json (erste 200 Zeilen) ----"
+            sed -n '1,200p' project.json || true
+          else
+            echo "GameCube_Intro.sb3 nicht gefunden"
+            exit 1
+          fi
+
+      - name: Upload project.json artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-json
+          path: project.json
+
+      - name: Upload sb3 artifact
+        uses: actions/upload-artifact@v4
         with:
           name: GameCube_Intro
           path: '**/GameCube_Intro.sb3'
